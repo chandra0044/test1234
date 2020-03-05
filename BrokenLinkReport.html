@@ -1,0 +1,1372 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>Test Report</title>
+<style>body {
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	min-width: 1200px;
+	color: #999;
+}
+
+h1 {
+	font-size: 24px;
+	color: black;
+}
+
+h2 {
+	font-size: 16px;
+	color: black;
+}
+
+p {
+    color: black;
+}
+
+a {
+	color: #999;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+/******************************
+ * SUMMARY INFORMATION
+ ******************************/
+
+#environment td {
+	padding: 5px;
+	border: 1px solid #E6E6E6;
+}
+
+#environment tr:nth-child(odd) {
+	background-color: #f6f6f6;
+}
+
+/******************************
+ * TEST RESULT COLORS
+ ******************************/
+span.passed, .passed .col-result {
+	color: green;
+}
+span.skipped, span.xfailed, span.rerun, .skipped .col-result, .xfailed .col-result, .rerun .col-result {
+	color: orange;
+}
+span.error, span.failed, span.xpassed, .error .col-result, .failed .col-result, .xpassed .col-result  {
+	color: red;
+}
+
+
+/******************************
+ * RESULTS TABLE
+ *
+ * 1. Table Layout
+ * 2. Extra
+ * 3. Sorting items
+ *
+ ******************************/
+
+/*------------------
+ * 1. Table Layout
+ *------------------*/
+
+#results-table {
+	border: 1px solid #e6e6e6;
+	color: #999;
+	font-size: 12px;
+	width: 100%
+}
+
+#results-table th, #results-table td {
+	padding: 5px;
+	border: 1px solid #E6E6E6;
+	text-align: left
+}
+#results-table th {
+	font-weight: bold
+}
+
+/*------------------
+ * 2. Extra
+ *------------------*/
+
+.log:only-child {
+	height: inherit
+}
+.log {
+	background-color: #e6e6e6;
+	border: 1px solid #e6e6e6;
+	color: black;
+	display: block;
+	font-family: "Courier New", Courier, monospace;
+	height: 230px;
+	overflow-y: scroll;
+	padding: 5px;
+	white-space: pre-wrap
+}
+div.image {
+	border: 1px solid #e6e6e6;
+	float: right;
+	height: 240px;
+	margin-left: 5px;
+	overflow: hidden;
+	width: 320px
+}
+div.image img {
+	width: 320px
+}
+.collapsed {
+	display: none;
+}
+.expander::after {
+	content: " (show details)";
+	color: #BBB;
+	font-style: italic;
+	cursor: pointer;
+}
+.collapser::after {
+	content: " (hide details)";
+	color: #BBB;
+	font-style: italic;
+	cursor: pointer;
+}
+
+/*------------------
+ * 3. Sorting items
+ *------------------*/
+.sortable {
+	cursor: pointer;
+}
+
+.sort-icon {
+	font-size: 0px;
+	float: left;
+	margin-right: 5px;
+	margin-top: 5px;
+	/*triangle*/
+	width: 0;
+	height: 0;
+	border-left: 8px solid transparent;
+	border-right: 8px solid transparent;
+}
+
+.inactive .sort-icon {
+	/*finish triangle*/
+	border-top: 8px solid #E6E6E6;
+}
+
+.asc.active .sort-icon {
+	/*finish triangle*/
+	border-bottom: 8px solid #999;
+}
+
+.desc.active .sort-icon {
+	/*finish triangle*/
+	border-top: 8px solid #999;
+}
+</style>    <link href="assets/style.css" rel="stylesheet" type="text/css"/></head>
+  <body onLoad="init()">
+    <script>/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+
+function toArray(iter) {
+    if (iter === null) {
+        return null;
+    }
+    return Array.prototype.slice.call(iter);
+}
+
+function find(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return elem.querySelector(selector);
+}
+
+function find_all(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return toArray(elem.querySelectorAll(selector));
+}
+
+function sort_column(elem) {
+    toggle_sort_states(elem);
+    var colIndex = toArray(elem.parentNode.childNodes).indexOf(elem);
+    var key;
+    if (elem.classList.contains('numeric')) {
+        key = key_num;
+    } else if (elem.classList.contains('result')) {
+        key = key_result;
+    } else {
+        key = key_alpha;
+    }
+    sort_table(elem, key(colIndex));
+}
+
+function show_all_extras() {
+    find_all('.col-result').forEach(show_extras);
+}
+
+function hide_all_extras() {
+    find_all('.col-result').forEach(hide_extras);
+}
+
+function show_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.remove("collapsed");
+    expandcollapse.classList.remove("expander");
+    expandcollapse.classList.add("collapser");
+}
+
+function hide_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.add("collapsed");
+    expandcollapse.classList.remove("collapser");
+    expandcollapse.classList.add("expander");
+}
+
+function show_filters() {
+    var filter_items = document.getElementsByClassName('filter');
+    for (var i = 0; i < filter_items.length; i++)
+        filter_items[i].hidden = false;
+}
+
+function add_collapse() {
+    // Add links for show/hide all
+    var resulttable = find('table#results-table');
+    var showhideall = document.createElement("p");
+    showhideall.innerHTML = '<a href="javascript:show_all_extras()">Show all details</a> / ' +
+                            '<a href="javascript:hide_all_extras()">Hide all details</a>';
+    resulttable.parentElement.insertBefore(showhideall, resulttable);
+
+    // Add show/hide link to each result
+    find_all('.col-result').forEach(function(elem) {
+        var collapsed = get_query_parameter('collapsed') || 'Passed';
+        var extras = elem.parentNode.nextElementSibling;
+        var expandcollapse = document.createElement("span");
+        if (collapsed.includes(elem.innerHTML)) {
+            extras.classList.add("collapsed");
+            expandcollapse.classList.add("expander");
+        } else {
+            expandcollapse.classList.add("collapser");
+        }
+        elem.appendChild(expandcollapse);
+
+        elem.addEventListener("click", function(event) {
+            if (event.currentTarget.parentNode.nextElementSibling.classList.contains("collapsed")) {
+                show_extras(event.currentTarget);
+            } else {
+                hide_extras(event.currentTarget);
+            }
+        });
+    })
+}
+
+function get_query_parameter(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+function init () {
+    reset_sort_headers();
+
+    add_collapse();
+
+    show_filters();
+
+    toggle_sort_states(find('.initial-sort'));
+
+    find_all('.sortable').forEach(function(elem) {
+        elem.addEventListener("click",
+                              function(event) {
+                                  sort_column(elem);
+                              }, false)
+    });
+
+};
+
+function sort_table(clicked, key_func) {
+    var rows = find_all('.results-table-row');
+    var reversed = !clicked.classList.contains('asc');
+    var sorted_rows = sort(rows, key_func, reversed);
+    /* Whole table is removed here because browsers acts much slower
+     * when appending existing elements.
+     */
+    var thead = document.getElementById("results-table-head");
+    document.getElementById('results-table').remove();
+    var parent = document.createElement("table");
+    parent.id = "results-table";
+    parent.appendChild(thead);
+    sorted_rows.forEach(function(elem) {
+        parent.appendChild(elem);
+    });
+    document.getElementsByTagName("BODY")[0].appendChild(parent);
+}
+
+function sort(items, key_func, reversed) {
+    var sort_array = items.map(function(item, i) {
+        return [key_func(item), i];
+    });
+
+    sort_array.sort(function(a, b) {
+        var key_a = a[0];
+        var key_b = b[0];
+
+        if (key_a == key_b) return 0;
+
+        if (reversed) {
+            return (key_a < key_b ? 1 : -1);
+        } else {
+            return (key_a > key_b ? 1 : -1);
+        }
+    });
+
+    return sort_array.map(function(item) {
+        var index = item[1];
+        return items[index];
+    });
+}
+
+function key_alpha(col_index) {
+    return function(elem) {
+        return elem.childNodes[1].childNodes[col_index].firstChild.data.toLowerCase();
+    };
+}
+
+function key_num(col_index) {
+    return function(elem) {
+        return parseFloat(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function key_result(col_index) {
+    return function(elem) {
+        var strings = ['Error', 'Failed', 'Rerun', 'XFailed', 'XPassed',
+                       'Skipped', 'Passed'];
+        return strings.indexOf(elem.childNodes[1].childNodes[col_index].firstChild.data);
+    };
+}
+
+function reset_sort_headers() {
+    find_all('.sort-icon').forEach(function(elem) {
+        elem.parentNode.removeChild(elem);
+    });
+    find_all('.sortable').forEach(function(elem) {
+        var icon = document.createElement("div");
+        icon.className = "sort-icon";
+        icon.textContent = "vvv";
+        elem.insertBefore(icon, elem.firstChild);
+        elem.classList.remove("desc", "active");
+        elem.classList.add("asc", "inactive");
+    });
+}
+
+function toggle_sort_states(elem) {
+    //if active, toggle between asc and desc
+    if (elem.classList.contains('active')) {
+        elem.classList.toggle('asc');
+        elem.classList.toggle('desc');
+    }
+
+    //if inactive, reset all other functions and add ascending active
+    if (elem.classList.contains('inactive')) {
+        reset_sort_headers();
+        elem.classList.remove('inactive');
+        elem.classList.add('active');
+    }
+}
+
+function is_all_rows_hidden(value) {
+  return value.hidden == false;
+}
+
+function filter_table(elem) {
+    var outcome_att = "data-test-result";
+    var outcome = elem.getAttribute(outcome_att);
+    class_outcome = outcome + " results-table-row";
+    var outcome_rows = document.getElementsByClassName(class_outcome);
+
+    for(var i = 0; i < outcome_rows.length; i++){
+        outcome_rows[i].hidden = !elem.checked;
+    }
+
+    var rows = find_all('.results-table-row').filter(is_all_rows_hidden);
+    var all_rows_hidden = rows.length == 0 ? true : false;
+    var not_found_message = document.getElementById("not-found-message");
+    not_found_message.hidden = !all_rows_hidden;
+}
+</script>
+    <h1>Broken Link Automation Report</h1>
+    <p>Report generated on 03-Dec-2019 at 18:16:27 by <a href="https://pypi.python.org/pypi/pytest-html">pytest-html</a> v2.0.0</p>
+<h2>Details</h2>
+    <table id="environment">
+      <tr>
+        <td>Author</td>
+        <td>Chandra Vadla</td></tr>
+
+      <tr>
+        <td>Scope of test</td>
+        <td>Test all links & return output if any not working URLs found</td></tr>
+      <tr>
+      </table>    <h2>Environment</h2>
+    <table id="environment">
+      <tr>
+        <td>Packages</td>
+        <td>{&apos;pytest&apos;: &apos;5.2.1&apos;, &apos;py&apos;: &apos;1.8.0&apos;, &apos;pluggy&apos;: &apos;0.13.0&apos;}</td></tr>
+      <tr>
+        <td>Platform</td>
+        <td>Darwin-17.6.0-x86_64-i386-64bit</td></tr>
+      <tr>
+        <td>Plugins</td>
+        <td>{&apos;xdist&apos;: &apos;1.30.0&apos;, &apos;forked&apos;: &apos;1.1.1&apos;, &apos;html&apos;: &apos;2.0.0&apos;, &apos;metadata&apos;: &apos;1.8.0&apos;}</td></tr>
+      <tr>
+        <td>Python</td>
+        <td>3.7.4</td></tr></table>
+    <h2>Summary</h2>
+    <p>1 tests ran in 2337.78 seconds. </p>
+    <p class="filter" hidden="true">(Un)check the boxes to filter the results.</p><input checked="true" class="filter" data-test-result="passed" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="passed">1 passed</span>, <input checked="true" class="filter" data-test-result="skipped" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="skipped">0 skipped</span>, <input checked="true" class="filter" data-test-result="failed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="failed">0 failed</span>, <input checked="true" class="filter" data-test-result="error" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="error">0 errors</span>, <input checked="true" class="filter" data-test-result="xfailed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xfailed">0 expected failures</span>, <input checked="true" class="filter" data-test-result="xpassed" disabled="true" hidden="true" name="filter_checkbox" onChange="filter_table(this)" type="checkbox"/><span class="xpassed">0 unexpected passes</span>
+    <h2>Results</h2>
+    <table id="results-table">
+      <thead id="results-table-head">
+        <tr>
+          <th class="sortable result initial-sort" col="result">Result</th>
+          <th class="sortable" col="name">Test</th>
+          <th class="sortable numeric" col="duration">Duration</th>
+          <th>Links</th></tr>
+        <tr hidden="true" id="not-found-message">
+          <th colspan="4">No results found. Try to check the filters</th></tr></thead>
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Passed</td>
+          <td class="col-name">test_linkchecker.py::test_loadData</td>
+          <td class="col-duration">2336.79</td>
+          <td class="col-links"></td></tr>
+        <tr>
+          <td class="extra" colspan="4">
+            <div class="log"> ------------------------------Captured stdout call------------------------------ <br/>Input Data loaded: SUCCESS
+STARTED
+https://staging:staging@staging.swweb.app/products/cloud-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/cloud-security/cloud-app-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/cloud-security/private-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/cloud-security/public-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/endpoint-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/entry-level/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/high-end/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/mid-range/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/mid-range/access-points-supported/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/nsv-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/security-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/security-services/capture-advanced-threat-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/security-services/capture-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/security-services/content-filtering-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/security-services/content-filtering-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/security-services/content-filtering-services/content-filtering-categories/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/security-services/security-bundles/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/wan-acceleration/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/wireless-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/wireless-security/sonicpoint-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/wireless-security/sonicwave-200-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/wireless-security/sonicwave-400-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/wireless-security/wifi-cloud-manager/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/firewalls/wireless-security/wifi-planner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/management-and-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/management-and-reporting/analytics/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/management-and-reporting/global-management-system/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/products/remote-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/remote-access/remote-access-appliances/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/remote-access/remote-access-management-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/remote-access/vpn-clients/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/secure-email/cloud-email-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/secure-email/email-security-appliance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/products/web-application-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/capture-cloud-platform/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/capture-security-center/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/advanced-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/advanced-threats/cryptojacking/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/advanced-threats/email-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/advanced-threats/encrypted-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/advanced-threats/fileless-malware/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/advanced-threats/ransomware-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/advanced-threats/wireless-and-mobile-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/industry/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/industry/data-center-providers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/industry/distributed-enterprise/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/industry/financial-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/industry/healthcare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/industry/higher-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/industry/k-12-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/industry/k-12-education/e-rate/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/industry/public-sector/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/industry/public-sector/federal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/industry/retail-hospitality/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/industry/small-medium-businesses/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/industry/state-and-local/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/risk-management/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/risk-management/risk-meters/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/service-provider/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/service-provider/mssp-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/service-provider/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/use-cases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/use-cases/hybrid-multi-cloud/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/use-cases/office-365/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/use-cases/saas-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/use-cases/secure-sd-wan/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/solutions/use-cases/secure-wifi/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partner-locator/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners/authorized-distributors/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners/authorized-training-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners/become-a-partner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners/cloud-gms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners/mssp-partner-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners/partner-enabled-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners/partner-portal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners/partner-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners/sonicwall-training-certification/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners/sonicwall-university/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/partners/technology-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/support/article-not-helpful-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/support/contact-support/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/support/contact-support/customer-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/support/contact-support/licensing-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/support/contact-support/renewals-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/support/contact-support/request-product-information/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/support/knowledge-base/: <b style="color:red">BAD &#10060;</b>>
+https://staging:staging@staging.swweb.app/support/product-lifecycle-tables/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/support/product-notifications/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/support/request-new-article-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/support/support-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/support/technical-documentation/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/support/video-tutorials/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/about-sonicwall/awards/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/about-sonicwall/careers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/about-sonicwall/leadership/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/about-sonicwall/news/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/about-sonicwall/news/press-releases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/about-sonicwall/press-kit-media-tools/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/cloud-email-security-products-compare-2/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/customers/contact-sales-promo/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/customers/contact-sales/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/customers/loyalty-trade-in-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/customers/loyalty-trade-in-program/competitive-trade-in/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/customers/loyalty-trade-in-program/secure-upgrade-plus/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/gms-capacity-planning-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/gms-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/high-end-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/legal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/legal/agreement-for-sonicwall-nsv/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/legal/general-product-agreement/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/legal/service-terms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/2019-cyber-threat-report-lp/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/capture-labs/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/e-rate-fear-less-video-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/it-2018-cyber-threat-report/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/nss-labs-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/provide-anytime-any-device-secure-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/security-bundle-infographic/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/see-sonicwall-capture-in-action/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/sonicwall-cyber-threat-report-thank-you/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/testimonial-comlogic/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/testimonial-ndtv/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/testimonial-wonder-cement-limited/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/video-sonicwall-nssp-high-end-firewalls-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/lp/video-sonicwall-nsv-series-virtual/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/mid-range-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/phishing-iq-test-landing/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/phishing-iq-test/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/press-kit-media-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/resources/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/secure-mobile-access-sma-appliances-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/sonicpoint-wireless-security-series-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/sonicwall-network-security-virtual-nsv-series-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/sonicwall-promotions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/sonicwave-200-series-access-points-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/sonicwave-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/sonicwave-wireless-security-series-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/switch-to-sonicwall-from-cisco/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/switch-to-sonicwall-from-juniper/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/switch-to-sonicwall-from-sophos/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/switch-to-sonicwall-from-watchguard/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/switch-to-sonicwall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/technology-alliance-partner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/tz-entry-level-firewall-series-products-compare-2/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/wan-acceleration-product-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/web-application-firewall-product-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/cloud-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/cloud-security/cloud-app-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/cloud-security/private-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/cloud-security/public-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/endpoint-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/entry-level/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/high-end/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/mid-range/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/mid-range/access-points-supported/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/nsv-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/security-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/security-services/capture-advanced-threat-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/security-services/capture-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/security-services/content-filtering-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/security-services/content-filtering-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/security-services/content-filtering-services/content-filtering-categories/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/security-services/security-bundles/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/wan-acceleration/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/wireless-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/wireless-security/sonicpoint-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/wireless-security/sonicwave-200-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/wireless-security/sonicwave-400-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/wireless-security/wifi-cloud-manager/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/firewalls/wireless-security/wifi-planner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/management-and-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/management-and-reporting/analytics/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/management-and-reporting/global-management-system/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/es-mx/products/remote-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/remote-access/remote-access-appliances/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/remote-access/remote-access-management-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/remote-access/vpn-clients/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/secure-email/cloud-email-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/secure-email/email-security-appliance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/products/web-application-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/capture-cloud-platform/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/capture-security-center/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/advanced-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/advanced-threats/cryptojacking/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/advanced-threats/email-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/advanced-threats/encrypted-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/advanced-threats/fileless-malware/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/advanced-threats/ransomware-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/advanced-threats/wireless-and-mobile-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/industry/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/industry/data-center-providers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/industry/distributed-enterprise/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/industry/financial-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/industry/healthcare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/industry/higher-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/industry/k-12-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/industry/k-12-education/e-rate/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/industry/public-sector/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/industry/public-sector/federal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/industry/retail-hospitality/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/industry/small-medium-businesses/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/industry/state-and-local/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/risk-management/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/risk-management/risk-meters/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/service-provider/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/service-provider/mssp-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/service-provider/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/use-cases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/use-cases/hybrid-multi-cloud/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/use-cases/office-365/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/use-cases/saas-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/use-cases/secure-sd-wan/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/solutions/use-cases/secure-wifi/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partner-locator/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners/authorized-distributors/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners/authorized-training-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners/become-a-partner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners/cloud-gms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners/mssp-partner-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners/partner-enabled-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners/partner-portal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners/partner-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners/sonicwall-training-certification/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners/sonicwall-university/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/partners/technology-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/support/article-not-helpful-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/support/contact-support/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/support/contact-support/customer-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/support/contact-support/licensing-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/support/contact-support/renewals-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/support/contact-support/request-product-information/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/support/knowledge-base/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/support/product-lifecycle-tables/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/support/product-notifications/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/support/request-new-article-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/support/support-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/support/technical-documentation/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/support/video-tutorials/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/about-sonicwall/awards/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/about-sonicwall/careers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/about-sonicwall/leadership/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/about-sonicwall/news/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/about-sonicwall/news/press-releases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/about-sonicwall/press-kit-media-tools/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/cloud-email-security-products-compare-2/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/customers/contact-sales-promo/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/customers/contact-sales/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/customers/loyalty-trade-in-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/customers/loyalty-trade-in-program/competitive-trade-in/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/customers/loyalty-trade-in-program/secure-upgrade-plus/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/gms-capacity-planning-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/gms-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/high-end-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/legal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/legal/agreement-for-sonicwall-nsv/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/legal/general-product-agreement/: <b style="color:red">Not working & status code is: </b>503 &#10060;
+https://staging:staging@staging.swweb.app/es-mx/legal/service-terms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/phishing-iq-test-landing/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/phishing-iq-test/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/press-kit-media-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/es-mx/resources/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/cloud-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/cloud-security/cloud-app-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/cloud-security/private-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/cloud-security/public-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/endpoint-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/entry-level/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/high-end/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/mid-range/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/mid-range/access-points-supported/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/nsv-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/security-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/security-services/capture-advanced-threat-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/security-services/capture-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/security-services/content-filtering-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/security-services/content-filtering-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/security-services/content-filtering-services/content-filtering-categories/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/security-services/security-bundles/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/wan-acceleration/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/wireless-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/wireless-security/sonicpoint-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/wireless-security/sonicwave-200-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/wireless-security/sonicwave-400-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/wireless-security/wifi-cloud-manager/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/firewalls/wireless-security/wifi-planner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/management-and-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/management-and-reporting/analytics/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/management-and-reporting/global-management-system/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/fr-fr/products/remote-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/remote-access/remote-access-appliances/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/remote-access/remote-access-management-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/remote-access/vpn-clients/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/secure-email/cloud-email-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/secure-email/email-security-appliance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/products/web-application-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/capture-cloud-platform/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/capture-security-center/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/advanced-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/advanced-threats/cryptojacking/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/advanced-threats/email-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/advanced-threats/encrypted-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/advanced-threats/fileless-malware/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/advanced-threats/ransomware-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/advanced-threats/wireless-and-mobile-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/industry/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/industry/data-center-providers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/industry/distributed-enterprise/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/industry/financial-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/industry/healthcare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/industry/higher-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/industry/k-12-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/industry/k-12-education/e-rate/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/industry/public-sector/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/industry/public-sector/federal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/industry/retail-hospitality/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/industry/small-medium-businesses/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/industry/state-and-local/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/risk-management/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/risk-management/risk-meters/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/service-provider/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/service-provider/mssp-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/service-provider/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/use-cases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/use-cases/hybrid-multi-cloud/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/use-cases/office-365/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/use-cases/saas-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/use-cases/secure-sd-wan/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/solutions/use-cases/secure-wifi/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partner-locator/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners/authorized-distributors/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners/authorized-training-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners/become-a-partner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners/cloud-gms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners/mssp-partner-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners/partner-enabled-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners/partner-portal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners/partner-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners/sonicwall-training-certification/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners/sonicwall-university/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/partners/technology-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/support/article-not-helpful-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/support/contact-support/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/support/contact-support/customer-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/support/contact-support/licensing-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/support/contact-support/renewals-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/support/contact-support/request-product-information/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/support/knowledge-base/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/support/product-lifecycle-tables/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/support/product-notifications/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/support/request-new-article-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/support/support-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/support/technical-documentation/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/support/video-tutorials/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/about-sonicwall/awards/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/about-sonicwall/careers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/about-sonicwall/leadership/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/about-sonicwall/news/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/about-sonicwall/news/press-releases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/about-sonicwall/press-kit-media-tools/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/cloud-email-security-products-compare-2/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/customers/contact-sales-promo/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/customers/contact-sales/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/customers/loyalty-trade-in-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/customers/loyalty-trade-in-program/competitive-trade-in/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/customers/loyalty-trade-in-program/secure-upgrade-plus/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/gms-capacity-planning-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/gms-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/high-end-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/legal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/legal/agreement-for-sonicwall-nsv/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/legal/general-product-agreement/: <b style="color:red">Not working & status code is: </b>503 &#10060;
+https://staging:staging@staging.swweb.app/fr-fr/legal/service-terms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/phishing-iq-test-landing/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/phishing-iq-test/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/press-kit-media-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/fr-fr/resources/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/cloud-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/cloud-security/cloud-app-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/cloud-security/private-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/cloud-security/public-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/endpoint-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/entry-level/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/high-end/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/mid-range/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/mid-range/access-points-supported/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/nsv-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/security-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/security-services/capture-advanced-threat-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/security-services/capture-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/security-services/content-filtering-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/security-services/content-filtering-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/security-services/content-filtering-services/content-filtering-categories/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/security-services/security-bundles/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/wan-acceleration/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/wireless-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/wireless-security/sonicpoint-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/wireless-security/sonicwave-200-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/wireless-security/sonicwave-400-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/wireless-security/wifi-cloud-manager/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/firewalls/wireless-security/wifi-planner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/management-and-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/management-and-reporting/analytics/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/management-and-reporting/global-management-system/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/de-de/products/remote-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/remote-access/remote-access-appliances/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/remote-access/remote-access-management-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/remote-access/vpn-clients/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/secure-email/cloud-email-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/secure-email/email-security-appliance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/products/web-application-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/capture-cloud-platform/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/capture-security-center/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/advanced-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/advanced-threats/cryptojacking/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/advanced-threats/email-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/advanced-threats/encrypted-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/advanced-threats/fileless-malware/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/advanced-threats/ransomware-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/advanced-threats/wireless-and-mobile-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/industry/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/industry/data-center-providers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/industry/distributed-enterprise/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/industry/financial-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/industry/healthcare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/industry/higher-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/industry/k-12-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/industry/k-12-education/e-rate/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/industry/public-sector/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/industry/public-sector/federal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/industry/retail-hospitality/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/industry/small-medium-businesses/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/industry/state-and-local/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/risk-management/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/risk-management/risk-meters/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/service-provider/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/service-provider/mssp-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/service-provider/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/use-cases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/use-cases/hybrid-multi-cloud/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/use-cases/office-365/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/use-cases/saas-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/use-cases/secure-sd-wan/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/solutions/use-cases/secure-wifi/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partner-locator/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners/authorized-distributors/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners/authorized-training-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners/become-a-partner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners/cloud-gms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners/mssp-partner-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners/partner-enabled-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners/partner-portal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners/partner-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners/sonicwall-training-certification/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners/sonicwall-university/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/partners/technology-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/support/article-not-helpful-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/support/contact-support/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/support/contact-support/customer-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/support/contact-support/licensing-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/support/contact-support/renewals-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/support/contact-support/request-product-information/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/support/knowledge-base/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/support/product-lifecycle-tables/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/support/product-notifications/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/support/request-new-article-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/support/support-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/support/technical-documentation/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/support/video-tutorials/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/about-sonicwall/awards/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/about-sonicwall/careers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/about-sonicwall/leadership/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/about-sonicwall/news/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/about-sonicwall/news/press-releases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/about-sonicwall/press-kit-media-tools/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/cloud-email-security-products-compare-2/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/customers/contact-sales-promo/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/customers/contact-sales/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/customers/loyalty-trade-in-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/customers/loyalty-trade-in-program/competitive-trade-in/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/customers/loyalty-trade-in-program/secure-upgrade-plus/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/gms-capacity-planning-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/gms-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/high-end-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/legal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/legal/agreement-for-sonicwall-nsv/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/legal/general-product-agreement/: <b style="color:red">Not working & status code is: </b>503 &#10060;
+https://staging:staging@staging.swweb.app/de-de/legal/service-terms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/phishing-iq-test-landing/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/phishing-iq-test/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/press-kit-media-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/de-de/resources/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/cloud-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/cloud-security/cloud-app-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/cloud-security/private-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/cloud-security/public-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/endpoint-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/entry-level/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/high-end/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/mid-range/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/mid-range/access-points-supported/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/nsv-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/security-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/security-services/capture-advanced-threat-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/security-services/capture-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/security-services/content-filtering-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/security-services/content-filtering-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/security-services/content-filtering-services/content-filtering-categories/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/security-services/security-bundles/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/wan-acceleration/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/wireless-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/wireless-security/sonicpoint-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/wireless-security/sonicwave-200-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/wireless-security/sonicwave-400-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/wireless-security/wifi-cloud-manager/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/firewalls/wireless-security/wifi-planner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/management-and-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/management-and-reporting/analytics/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/management-and-reporting/global-management-system/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/ja-jp/products/remote-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/remote-access/remote-access-appliances/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/remote-access/remote-access-management-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/remote-access/vpn-clients/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/secure-email/cloud-email-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/secure-email/email-security-appliance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/products/web-application-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/capture-cloud-platform/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/capture-security-center/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/advanced-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/advanced-threats/cryptojacking/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/advanced-threats/email-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/advanced-threats/encrypted-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/advanced-threats/fileless-malware/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/advanced-threats/ransomware-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/advanced-threats/wireless-and-mobile-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/industry/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/industry/data-center-providers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/industry/distributed-enterprise/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/industry/financial-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/industry/healthcare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/industry/higher-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/industry/k-12-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/industry/k-12-education/e-rate/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/industry/public-sector/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/industry/public-sector/federal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/industry/retail-hospitality/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/industry/small-medium-businesses/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/industry/state-and-local/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/risk-management/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/risk-management/risk-meters/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/service-provider/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/service-provider/mssp-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/service-provider/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/use-cases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/use-cases/hybrid-multi-cloud/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/use-cases/office-365/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/use-cases/saas-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/use-cases/secure-sd-wan/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/solutions/use-cases/secure-wifi/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partner-locator/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners/authorized-distributors/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners/authorized-training-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners/become-a-partner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners/cloud-gms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners/mssp-partner-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners/partner-enabled-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners/partner-portal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners/partner-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners/sonicwall-training-certification/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners/sonicwall-university/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/partners/technology-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/support/article-not-helpful-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/support/contact-support/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/support/contact-support/customer-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/support/contact-support/licensing-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/support/contact-support/renewals-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/support/contact-support/request-product-information/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/support/knowledge-base/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/support/product-lifecycle-tables/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/support/product-notifications/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/support/request-new-article-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/support/support-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/support/technical-documentation/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/support/video-tutorials/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/about-sonicwall/awards/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/about-sonicwall/careers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/about-sonicwall/leadership/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/about-sonicwall/news/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/about-sonicwall/news/press-releases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/about-sonicwall/press-kit-media-tools/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/cloud-email-security-products-compare-2/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/customers/contact-sales-promo/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/customers/contact-sales/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/customers/loyalty-trade-in-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/customers/loyalty-trade-in-program/competitive-trade-in/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/customers/loyalty-trade-in-program/secure-upgrade-plus/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/gms-capacity-planning-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/gms-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/high-end-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/legal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/legal/agreement-for-sonicwall-nsv/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/legal/general-product-agreement/: <b style="color:red">Not working & status code is: </b>503 &#10060;
+https://staging:staging@staging.swweb.app/ja-jp/legal/service-terms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/phishing-iq-test-landing/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/phishing-iq-test/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/press-kit-media-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ja-jp/resources/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/cloud-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/cloud-security/cloud-app-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/cloud-security/private-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/cloud-security/public-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/endpoint-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/entry-level/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/high-end/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/mid-range/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/mid-range/access-points-supported/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/nsv-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/security-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/security-services/capture-advanced-threat-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/security-services/capture-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/security-services/content-filtering-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/security-services/content-filtering-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/security-services/content-filtering-services/content-filtering-categories/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/security-services/security-bundles/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/wan-acceleration/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/wireless-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/wireless-security/sonicpoint-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/wireless-security/sonicwave-200-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/wireless-security/sonicwave-400-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/wireless-security/wifi-cloud-manager/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/firewalls/wireless-security/wifi-planner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/management-and-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/management-and-reporting/analytics/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/management-and-reporting/global-management-system/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/zh-cn/products/remote-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/remote-access/remote-access-appliances/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/remote-access/remote-access-management-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/remote-access/vpn-clients/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/secure-email/cloud-email-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/secure-email/email-security-appliance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/products/web-application-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/capture-cloud-platform/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/capture-security-center/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/advanced-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/advanced-threats/cryptojacking/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/advanced-threats/email-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/advanced-threats/encrypted-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/advanced-threats/fileless-malware/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/advanced-threats/ransomware-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/advanced-threats/wireless-and-mobile-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/industry/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/industry/data-center-providers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/industry/distributed-enterprise/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/industry/financial-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/industry/healthcare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/industry/higher-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/industry/k-12-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/industry/k-12-education/e-rate/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/industry/public-sector/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/industry/public-sector/federal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/industry/retail-hospitality/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/industry/small-medium-businesses/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/industry/state-and-local/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/risk-management/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/risk-management/risk-meters/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/service-provider/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/service-provider/mssp-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/service-provider/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/use-cases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/use-cases/hybrid-multi-cloud/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/use-cases/office-365/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/use-cases/saas-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/use-cases/secure-sd-wan/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/solutions/use-cases/secure-wifi/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partner-locator/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners/authorized-distributors/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners/authorized-training-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners/become-a-partner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners/cloud-gms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners/mssp-partner-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners/partner-enabled-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners/partner-portal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners/partner-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners/sonicwall-training-certification/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners/sonicwall-university/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/partners/technology-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/support/article-not-helpful-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/support/contact-support/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/support/contact-support/customer-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/support/contact-support/licensing-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/support/contact-support/renewals-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/support/contact-support/request-product-information/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/support/knowledge-base/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/support/product-lifecycle-tables/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/support/product-notifications/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/support/request-new-article-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/support/support-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/support/technical-documentation/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/support/video-tutorials/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/about-sonicwall/awards/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/about-sonicwall/careers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/about-sonicwall/leadership/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/about-sonicwall/news/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/about-sonicwall/news/press-releases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/about-sonicwall/press-kit-media-tools/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/cloud-email-security-products-compare-2/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/customers/contact-sales-promo/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/customers/contact-sales/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/customers/loyalty-trade-in-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/customers/loyalty-trade-in-program/competitive-trade-in/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/customers/loyalty-trade-in-program/secure-upgrade-plus/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/gms-capacity-planning-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/gms-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/high-end-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/legal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/legal/agreement-for-sonicwall-nsv/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/legal/general-product-agreement/: <b style="color:red">Not working & status code is: </b>503 &#10060;
+https://staging:staging@staging.swweb.app/zh-cn/legal/service-terms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/phishing-iq-test-landing/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/phishing-iq-test/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/press-kit-media-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/zh-cn/resources/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/cloud-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/cloud-security/cloud-app-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/cloud-security/private-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/cloud-security/public-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/endpoint-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/entry-level/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/high-end/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/mid-range/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/mid-range/access-points-supported/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/nsv-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/security-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/security-services/capture-advanced-threat-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/security-services/capture-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/security-services/content-filtering-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/security-services/content-filtering-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/security-services/content-filtering-services/content-filtering-categories/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/security-services/security-bundles/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/wan-acceleration/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/wireless-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/wireless-security/sonicpoint-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/wireless-security/sonicwave-200-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/wireless-security/sonicwave-400-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/wireless-security/wifi-cloud-manager/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/firewalls/wireless-security/wifi-planner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/management-and-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/management-and-reporting/analytics/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/management-and-reporting/global-management-system/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/ko-kr/products/remote-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/remote-access/remote-access-appliances/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/remote-access/remote-access-management-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/remote-access/vpn-clients/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/secure-email/cloud-email-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/secure-email/email-security-appliance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/products/web-application-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/capture-cloud-platform/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/capture-security-center/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/advanced-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/advanced-threats/cryptojacking/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/advanced-threats/email-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/advanced-threats/encrypted-threats/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/advanced-threats/fileless-malware/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/advanced-threats/ransomware-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/advanced-threats/wireless-and-mobile-access/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/industry/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/industry/data-center-providers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/industry/distributed-enterprise/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/industry/financial-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/industry/healthcare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/industry/higher-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/industry/k-12-education/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/industry/k-12-education/e-rate/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/industry/public-sector/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/industry/public-sector/federal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/industry/retail-hospitality/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/industry/small-medium-businesses/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/industry/state-and-local/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/risk-management/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/risk-management/risk-meters/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/service-provider/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/service-provider/mssp-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/service-provider/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/use-cases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/use-cases/hybrid-multi-cloud/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/use-cases/office-365/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/use-cases/saas-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/use-cases/secure-sd-wan/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/solutions/use-cases/secure-wifi/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partner-locator/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners/authorized-distributors/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners/authorized-training-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners/become-a-partner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners/cloud-gms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners/mssp-partner-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners/partner-enabled-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners/partner-portal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners/partner-terms-and-conditions/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners/security-as-a-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners/sonicwall-training-certification/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners/sonicwall-university/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/partners/technology-partners/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/support/article-not-helpful-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/support/contact-support/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/support/contact-support/customer-service/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/support/contact-support/licensing-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/support/contact-support/renewals-assistance/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/support/contact-support/request-product-information/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/support/knowledge-base/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/support/product-lifecycle-tables/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/support/product-notifications/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/support/request-new-article-form/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/support/support-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/support/technical-documentation/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/support/video-tutorials/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/about-sonicwall/awards/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/about-sonicwall/careers/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/about-sonicwall/leadership/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/about-sonicwall/news/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/about-sonicwall/news/press-releases/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/about-sonicwall/press-kit-media-tools/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/cloud-email-security-products-compare-2/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/customers/contact-sales-promo/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/customers/contact-sales/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/customers/loyalty-trade-in-program/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/customers/loyalty-trade-in-program/competitive-trade-in/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/customers/loyalty-trade-in-program/secure-upgrade-plus/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/gms-capacity-planning-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/gms-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/high-end-products-compare/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/legal/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/legal/agreement-for-sonicwall-nsv/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/legal/general-product-agreement/: <b style="color:red">Not working & status code is: </b>503 &#10060;
+https://staging:staging@staging.swweb.app/ko-kr/legal/service-terms/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/phishing-iq-test-landing/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/phishing-iq-test/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/press-kit-media-tool/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/ko-kr/resources/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/cloud-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/cloud-security/cloud-app-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/cloud-security/private-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/cloud-security/public-cloud-firewall/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/endpoint-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/entry-level/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/high-end/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/mid-range/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/mid-range/access-points-supported/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/nsv-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/security-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/security-services/capture-advanced-threat-protection/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/security-services/capture-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/security-services/content-filtering-client/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/security-services/content-filtering-services/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/security-services/content-filtering-services/content-filtering-categories/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/security-services/security-bundles/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/wan-acceleration/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/wireless-security/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/wireless-security/sonicpoint-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/wireless-security/sonicwave-200-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/wireless-security/sonicwave-400-series/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/wireless-security/wifi-cloud-manager/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/firewalls/wireless-security/wifi-planner/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/management-and-reporting/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/management-and-reporting/analytics/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/management-and-reporting/global-management-system/: <b style="color:green" > GOOD &#9989; </b>
+https://staging:staging@staging.swweb.app/pt-br/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+<b> Broken Links are: </b>
+-
+https://staging:staging@staging.swweb.app/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/support/knowledge-base/: <b style="color:red">BAD &#10060;</b>>
+https://staging:staging@staging.swweb.app/es-mx/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/es-mx/legal/general-product-agreement/: <b style="color:red">Not working & status code is: </b>503 &#10060;
+https://staging:staging@staging.swweb.app/fr-fr/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/fr-fr/legal/general-product-agreement/: <b style="color:red">Not working & status code is: </b>503 &#10060;
+https://staging:staging@staging.swweb.app/de-de/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/de-de/legal/general-product-agreement/: <b style="color:red">Not working & status code is: </b>503 &#10060;
+https://staging:staging@staging.swweb.app/ja-jp/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/ja-jp/legal/general-product-agreement/: <b style="color:red">Not working & status code is: </b>503 &#10060;
+https://staging:staging@staging.swweb.app/zh-cn/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/zh-cn/legal/general-product-agreement/: <b style="color:red">Not working & status code is: </b>503 &#10060;
+https://staging:staging@staging.swweb.app/ko-kr/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+https://staging:staging@staging.swweb.app/ko-kr/legal/general-product-agreement/: <b style="color:red">Not working & status code is: </b>503 &#10060;
+https://staging:staging@staging.swweb.app/pt-br/products/management-and-reporting/network-analyzer/: <b style="color:red">Not working & status code is: </b>410 &#10060;
+<br/></div></td></tr></tbody></table></body></html>
