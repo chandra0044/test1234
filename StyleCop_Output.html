@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>StyleCop Report</title>
+<style>
+body {
+	font-family: Helvetica, Arial, sans-serif;
+	font-size: 12px;
+	min-width: 1200px;
+	color: black;
+	background-color: #999999;
+}
+h1 {
+	font-size: 24px;
+	color: blue;
+}
+table {
+	border-collapse: collapse;
+}
+#environment td {
+	padding: 5px;
+	border: 1px solid #E6E6E6;
+}
+#environment tr:nth-child(odd) {
+	background-color: #f6f6f6;
+}
+span.passed, .passed .col-result {
+	color: green;
+}
+#results-table {
+	border: 1px solid #e6e6e6;
+	color: #999;
+	font-size: 12px;
+	width: 100%
+}
+#results-table th, #results-table td {
+	padding: 5px;
+	border: 1px solid #E6E6E6;
+	text-align: left
+}
+#results-table th {
+	font-weight: bold
+}
+.log:only-child {
+	height: inherit
+}
+.log {
+	background-color: #e6e6e6;
+	border: 1px solid #e6e6e6;
+	color: black;
+	display: block;
+	font-family: "Courier New", Courier, monospace;
+	height: 230px;
+	overflow-y: scroll;
+	padding: 5px;
+	white-space: pre-wrap
+}
+pre code {
+  background-color: rgb(30,30, 30);
+  border: 1px solid #999;
+  display: block;
+  font-size: 12px;
+  color: rgb(190, 190, 190);
+}
+div.image img {
+	width: 320px
+}
+.collapsed {
+	display: none;
+}
+.expander::after {
+	content: " (show details)";
+	color: #BBB;
+	font-style: italic;
+	cursor: pointer;
+}
+.collapser::after {
+	content: " (hide details)";
+	color: #BBB;
+	font-style: italic;
+	cursor: pointer;
+}
+
+</style></head>
+  <body onLoad="init()">
+  <script>
+function toArray(iter) {
+    if (iter === null) {
+        return null;
+    }
+    return Array.prototype.slice.call(iter);
+}
+function find_all(selector, elem) {
+    if (!elem) {
+        elem = document;
+    }
+    return toArray(elem.querySelectorAll(selector));
+}
+function sort_column(elem) {
+    toggle_sort_states(elem);
+    var colIndex = toArray(elem.parentNode.childNodes).indexOf(elem);
+    var key;
+    if (elem.classList.contains('numeric')) {
+        key = key_num;
+    } else if (elem.classList.contains('result')) {
+        key = key_result;
+    } else {
+        key = key_alpha;
+    }
+    sort_table(elem, key(colIndex));
+}
+function show_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.remove("collapsed");
+    expandcollapse.classList.remove("expander");
+    expandcollapse.classList.add("collapser");
+}
+function hide_extras(colresult_elem) {
+    var extras = colresult_elem.parentNode.nextElementSibling;
+    var expandcollapse = colresult_elem.firstElementChild;
+    extras.classList.add("collapsed");
+    expandcollapse.classList.remove("collapser");
+    expandcollapse.classList.add("expander");
+}
+function add_collapse() {
+    // Add links for show/hide all
+    var resulttable = find('table#results-table');
+    // Add show/hide link to each result
+    find_all('.col-result').forEach(function(elem) {
+        var collapsed = get_query_parameter('collapsed') || 'Passed';
+        var extras = elem.parentNode.nextElementSibling;
+        var expandcollapse = document.createElement("span");
+        if (collapsed.includes(elem.innerHTML)) {
+            extras.classList.add("collapsed");
+            expandcollapse.classList.add("expander");
+        } else {
+            expandcollapse.classList.add("collapser");
+        }
+        elem.appendChild(expandcollapse);
+        elem.addEventListener("click", function(event) {
+            if (event.currentTarget.parentNode.nextElementSibling.classList.contains("collapsed")) {
+                show_extras(event.currentTarget);
+            } else {
+                hide_extras(event.currentTarget);
+            }
+        });
+    })
+}
+function get_query_parameter(name) {
+    var match = RegExp('[?&]' + name + '=([^&]*)').exec(window.location.search);
+    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+function init () {
+    add_collapse();
+};
+</script>
+    <h1>StyleCop Results</h1>
+    <h2>By Devisetty</h2>
+    <table id="results-table">
+      <tbody class="passed results-table-row">
+        <tr>
+          <td class="col-result">Output</td>
+         </tr>
+        <tr>
+          <td class="extra" colspan="4">
+              <div class="log">
+<StyleCopViolations
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext"<br>LineNumber="14"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.DocumentationRules"<br>Rule="ElementsMustBeDocumented"<br>RuleId="SA1600"
+The class must have a documentation header.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext._container"<br>LineNumber="16"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.DocumentationRules"<br>Rule="ElementsMustBeDocumented"<br>RuleId="SA1600"
+The field must have a documentation header.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext._auditConfiguration"<br>LineNumber="17"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.DocumentationRules"<br>Rule="ElementsMustBeDocumented"<br>RuleId="SA1600"
+The field must have a documentation header.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.AuditService%IUnityContainer"<br>LineNumber="23"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.DocumentationRules"<br>Rule="ConstructorSummaryDocumentationMustBeginWithStandardText"<br>RuleId="SA1642"
+The documentation text within the constructor's summary tag must begin with the text: Initializes a new instance of the &lt;see cref="{TContext}" /&gt; class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.Process%TContext%string"<br>LineNumber="33"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.DocumentationRules"<br>Rule="ElementParametersMustBeDocumented"<br>RuleId="SA1611"
+The documentation header must contain param tags matching the element's parameter list.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="80"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.DocumentationRules"<br>Rule="ElementParametersMustBeDocumented"<br>RuleId="SA1611"
+The documentation header must contain param tags matching the element's parameter list.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="80"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.DocumentationRules"<br>Rule="DocumentationTextMustContainWhitespace"<br>RuleId="SA1630"
+The documentation text within the return tag does not contain any whitespace between words, indicating that it most likely does not follow a proper grammatical structure required for documentation text.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetAuditLog%int%string"<br>LineNumber="287"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.DocumentationRules"<br>Rule="DocumentationTextMustContainWhitespace"<br>RuleId="SA1630"
+The documentation text within the return tag does not contain any whitespace between words, indicating that it most likely does not follow a proper grammatical structure required for documentation text.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.ManualAudit%TContext%object"<br>LineNumber="348"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.DocumentationRules"<br>Rule="ElementsMustBeDocumented"<br>RuleId="SA1600"
+The method must have a documentation header.</Violation
+
+<br><br><pre><code><br>Section="Root"<br>LineNumber="1"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.DocumentationRules"<br>Rule="FileMustHaveHeader"<br>RuleId="SA1633"
+The file has no header, the header Xml is invalid, or the header is not located at the top of the file.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="102"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the if statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="118"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the if statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="127"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="129"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="131"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="133"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="135"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="178"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the if statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="180"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="201"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the if statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="228"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the if statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="233"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the if statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="237"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the if statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="239"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="StatementMustNotBeOnSingleLine"<br>RuleId="SA1501"
+A statement containing curly brackets must not be placed on a single line. The opening and closing curly brackets must each be placed on their own line.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="249"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the if statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="251"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="253"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="255"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="262"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the if statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetAuditLog%int%string"<br>LineNumber="291"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the if statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetAuditLog%int%string"<br>LineNumber="293"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetAuditLog%int%string"<br>LineNumber="295"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetAuditLog%int%string"<br>LineNumber="297"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetAuditLog%int%string"<br>LineNumber="299"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetAuditLog%int%string"<br>LineNumber="301"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetAuditLog%int%string"<br>LineNumber="303"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetAuditLog%int%string"<br>LineNumber="305"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the else statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.ManualAudit%TContext%object"<br>LineNumber="352"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CurlyBracketsMustNotBeOmitted"<br>RuleId="SA1503"
+The body of the if statement must be wrapped in opening and closing curly brackets.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetDeleteDisplayValues%TContext"<br>LineNumber="66"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="ClosingCurlyBracketMustBeFollowedByBlankLine"<br>RuleId="SA1513"
+Statements or elements wrapped in curly brackets must be followed by a blank line.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="94"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="CodeMustNotContainMultipleBlankLinesInARow"<br>RuleId="SA1507"
+The code must not contain multiple blank lines in a row.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="98"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="SingleLineCommentsMustNotBeFollowedByBlankLine"<br>RuleId="SA1512"
+A single-line comment must not be followed by a blank line. To ignore this error when commenting out a line of code, begin the comment with '////' rather than '//'.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="141"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="SingleLineCommentsMustNotBeFollowedByBlankLine"<br>RuleId="SA1512"
+A single-line comment must not be followed by a blank line. To ignore this error when commenting out a line of code, begin the comment with '////' rather than '//'.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="155"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="ClosingCurlyBracketMustBeFollowedByBlankLine"<br>RuleId="SA1513"
+Statements or elements wrapped in curly brackets must be followed by a blank line.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="202"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="ClosingCurlyBracketMustBeFollowedByBlankLine"<br>RuleId="SA1513"
+Statements or elements wrapped in curly brackets must be followed by a blank line.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="240"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="ClosingCurlyBracketMustBeFollowedByBlankLine"<br>RuleId="SA1513"
+Statements or elements wrapped in curly brackets must be followed by a blank line.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="244"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="ClosingCurlyBracketMustBeFollowedByBlankLine"<br>RuleId="SA1513"
+Statements or elements wrapped in curly brackets must be followed by a blank line.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="274"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="ClosingCurlyBracketMustBeFollowedByBlankLine"<br>RuleId="SA1513"
+Statements or elements wrapped in curly brackets must be followed by a blank line.</Violation
+
+<br><br><pre><code><br>Section="Root"<br>LineNumber="359"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.LayoutRules"<br>Rule="SingleLineCommentMustBePrecededByBlankLine"<br>RuleId="SA1515"
+A single-line comment must be preceded by a blank line or another single-line comment, or must be the first item in its scope. To ignore this error when commenting out a line of code, begin the comment with '////' rather than '//'.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext._container"<br>LineNumber="16"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.NamingRules"<br>Rule="FieldNamesMustNotBeginWithUnderscore"<br>RuleId="SA1309"
+Field names must not start with an underscore.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext._auditConfiguration"<br>LineNumber="17"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.NamingRules"<br>Rule="FieldNamesMustNotBeginWithUnderscore"<br>RuleId="SA1309"
+Field names must not start with an underscore.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="84"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.NamingRules"<br>Rule="FieldNamesMustBeginWithLowerCaseLetter"<br>RuleId="SA1306"
+Variable names and private field names must start with a lower-case letter: SubEntityID.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="144"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.NamingRules"<br>Rule="FieldNamesMustBeginWithLowerCaseLetter"<br>RuleId="SA1306"
+Variable names and private field names must start with a lower-case letter: SubEntity.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="119"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.NamingRules"<br>Rule="FieldNamesMustBeginWithLowerCaseLetter"<br>RuleId="SA1306"
+Variable names and private field names must start with a lower-case letter: NavId.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Model"<br>LineNumber="1"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="UsingDirectivesMustBePlacedWithinNamespace"<br>RuleId="SA1200"
+All using directives must be placed inside of the namespace.</Violation
+
+<br><br><pre><code><br>Section="Root.Microsoft.AspNet.Identity"<br>LineNumber="2"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="UsingDirectivesMustBePlacedWithinNamespace"<br>RuleId="SA1200"
+All using directives must be placed inside of the namespace.</Violation
+
+<br><br><pre><code><br>Section="Root.Unity"<br>LineNumber="3"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="UsingDirectivesMustBePlacedWithinNamespace"<br>RuleId="SA1200"
+All using directives must be placed inside of the namespace.</Violation
+
+<br><br><pre><code><br>Section="Root.System"<br>LineNumber="4"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="UsingDirectivesMustBePlacedWithinNamespace"<br>RuleId="SA1200"
+All using directives must be placed inside of the namespace.</Violation
+
+<br><br><pre><code><br>Section="Root.System.Collections.Generic"<br>LineNumber="5"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="UsingDirectivesMustBePlacedWithinNamespace"<br>RuleId="SA1200"
+All using directives must be placed inside of the namespace.</Violation
+
+<br><br><pre><code><br>Section="Root.System.Data.Entity"<br>LineNumber="6"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="UsingDirectivesMustBePlacedWithinNamespace"<br>RuleId="SA1200"
+All using directives must be placed inside of the namespace.</Violation
+
+<br><br><pre><code><br>Section="Root.System.Data.Entity.Core.Objects"<br>LineNumber="7"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="UsingDirectivesMustBePlacedWithinNamespace"<br>RuleId="SA1200"
+All using directives must be placed inside of the namespace.</Violation
+
+<br><br><pre><code><br>Section="Root.System.Data.Entity.Infrastructure"<br>LineNumber="8"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="UsingDirectivesMustBePlacedWithinNamespace"<br>RuleId="SA1200"
+All using directives must be placed inside of the namespace.</Violation
+
+<br><br><pre><code><br>Section="Root.System.Linq"<br>LineNumber="9"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="UsingDirectivesMustBePlacedWithinNamespace"<br>RuleId="SA1200"
+All using directives must be placed inside of the namespace.</Violation
+
+<br><br><pre><code><br>Section="Root.System.Reflection"<br>LineNumber="10"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="UsingDirectivesMustBePlacedWithinNamespace"<br>RuleId="SA1200"
+All using directives must be placed inside of the namespace.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetDeleteDisplayValues%TContext"<br>LineNumber="287"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="ElementsMustBeOrderedByAccess"<br>RuleId="SA1202"
+All private methods must be placed after all public methods.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetDeleteDisplayValues%TContext"<br>LineNumber="332"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="ElementsMustBeOrderedByAccess"<br>RuleId="SA1202"
+All private methods must be placed after all public methods.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetDeleteDisplayValues%TContext"<br>LineNumber="342"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="ElementsMustBeOrderedByAccess"<br>RuleId="SA1202"
+All private methods must be placed after all public methods.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetDeleteDisplayValues%TContext"<br>LineNumber="348"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="ElementsMustBeOrderedByAccess"<br>RuleId="SA1202"
+All private methods must be placed after all public methods.</Violation
+
+<br><br><pre><code><br>Section="Root.System"<br>LineNumber="4"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.OrderingRules"<br>Rule="SystemUsingDirectivesMustBePlacedBeforeOtherUsingDirectives"<br>RuleId="SA1208"
+System using directives must be placed before all other using directives.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="156"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="UseBuiltInTypeAlias"<br>RuleId="SA1121"
+Use the built-in type alias 'int' rather than Int32 or System.Int32.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="239"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="CodeMustNotContainMultipleStatementsOnOneLine"<br>RuleId="SA1107"
+A line may only contain a single statement.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.AuditService%IUnityContainer"<br>LineNumber="25"<br>StartLine="25"<br>StartColumn="13"<br>EndLine="25"<br>EndColumn="22"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to _container must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.AuditService%IUnityContainer"<br>LineNumber="26"<br>StartLine="26"<br>StartColumn="13"<br>EndLine="26"<br>EndColumn="31"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to _auditConfiguration must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.Process%TContext%string"<br>LineNumber="36"<br>StartLine="36"<br>StartColumn="39"<br>EndLine="36"<br>EndColumn="60"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to GetDeleteDisplayValues must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.Process%TContext%string"<br>LineNumber="41"<br>StartLine="41"<br>StartColumn="31"<br>EndLine="41"<br>EndColumn="55"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to CreateAuditLogTransaction must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetDeleteDisplayValues%TContext"<br>LineNumber="65"<br>StartLine="65"<br>StartColumn="44"<br>EndLine="65"<br>EndColumn="62"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to _auditConfiguration must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="116"<br>StartLine="116"<br>StartColumn="34"<br>EndLine="116"<br>EndColumn="43"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to _container must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="160"<br>StartLine="160"<br>StartColumn="32"<br>EndLine="160"<br>EndColumn="50"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to _auditConfiguration must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="178"<br>StartLine="178"<br>StartColumn="40"<br>EndLine="178"<br>EndColumn="58"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to _auditConfiguration must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="186"<br>StartLine="186"<br>StartColumn="36"<br>EndLine="186"<br>EndColumn="54"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to _auditConfiguration must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="231"<br>StartLine="231"<br>StartColumn="52"<br>EndLine="231"<br>EndColumn="70"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to _auditConfiguration must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="245"<br>StartLine="245"<br>StartColumn="49"<br>EndLine="245"<br>EndColumn="67"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to _auditConfiguration must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetAuditLog%int%string"<br>LineNumber="306"<br>StartLine="306"<br>StartColumn="27"<br>EndLine="306"<br>EndColumn="36"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to _container must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetModuleTypes"<br>LineNumber="334"<br>StartLine="334"<br>StartColumn="27"<br>EndLine="334"<br>EndColumn="36"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to _container must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetNavPoints"<br>LineNumber="344"<br>StartLine="344"<br>StartColumn="27"<br>EndLine="344"<br>EndColumn="36"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to _container must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.ManualAudit%TContext%object"<br>LineNumber="350"<br>StartLine="350"<br>StartColumn="31"<br>EndLine="350"<br>EndColumn="55"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.ReadabilityRules"<br>Rule="PrefixLocalCallsWithThis"<br>RuleId="SA1101"
+The call to CreateAuditLogTransaction must begin with the 'this.' prefix to indicate that the item is a member of the class.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext"<br>LineNumber="70"<br>StartLine="70"<br>StartColumn="9"<br>EndLine="70"<br>EndColumn="30"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SingleLineCommentsMustBeginWithSingleSpace"<br>RuleId="SA1005"
+The comment must start with a single space. To ignore this error when commenting out a line of code, begin the comment with '////' rather than '//'.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext"<br>LineNumber="71"<br>StartLine="71"<br>StartColumn="9"<br>EndLine="71"<br>EndColumn="52"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SingleLineCommentsMustBeginWithSingleSpace"<br>RuleId="SA1005"
+The comment must start with a single space. To ignore this error when commenting out a line of code, begin the comment with '////' rather than '//'.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext"<br>LineNumber="72"<br>StartLine="72"<br>StartColumn="9"<br>EndLine="72"<br>EndColumn="30"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SingleLineCommentsMustBeginWithSingleSpace"<br>RuleId="SA1005"
+The comment must start with a single space. To ignore this error when commenting out a line of code, begin the comment with '////' rather than '//'.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="83"<br>StartLine="83"<br>StartColumn="27"<br>EndLine="83"<br>EndColumn="27"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol '=' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="83"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol '=' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="95"<br>StartLine="95"<br>StartColumn="13"<br>EndLine="95"<br>EndColumn="29"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SingleLineCommentsMustBeginWithSingleSpace"<br>RuleId="SA1005"
+The comment must start with a single space. To ignore this error when commenting out a line of code, begin the comment with '////' rather than '//'.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="144"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol '=' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="147"<br>StartLine="147"<br>StartColumn="71"<br>EndLine="147"<br>EndColumn="71"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol '?' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="147"<br>StartLine="147"<br>StartColumn="110"<br>EndLine="147"<br>EndColumn="110"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="ClosingParenthesisMustBeSpacedCorrectly"<br>RuleId="SA1009"
+Invalid spacing around the closing parenthesis.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="147"<br>StartLine="147"<br>StartColumn="110"<br>EndLine="147"<br>EndColumn="110"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol ':' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="149"<br>StartLine="149"<br>StartColumn="111"<br>EndLine="149"<br>EndColumn="111"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="ClosingParenthesisMustBeSpacedCorrectly"<br>RuleId="SA1009"
+Invalid spacing around the closing parenthesis.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="149"<br>StartLine="149"<br>StartColumn="111"<br>EndLine="149"<br>EndColumn="111"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol ':' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="151"<br>StartLine="151"<br>StartColumn="23"<br>EndLine="151"<br>EndColumn="23"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="ColonsMustBeSpacedCorrectly"<br>RuleId="SA1024"
+Invalid spacing around the colon.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="151"<br>StartLine="151"<br>StartColumn="110"<br>EndLine="151"<br>EndColumn="110"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="ClosingParenthesisMustBeSpacedCorrectly"<br>RuleId="SA1009"
+Invalid spacing around the closing parenthesis.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="151"<br>StartLine="151"<br>StartColumn="110"<br>EndLine="151"<br>EndColumn="110"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol ':' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="153"<br>StartLine="153"<br>StartColumn="105"<br>EndLine="153"<br>EndColumn="105"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="ClosingParenthesisMustBeSpacedCorrectly"<br>RuleId="SA1009"
+Invalid spacing around the closing parenthesis.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="153"<br>StartLine="153"<br>StartColumn="105"<br>EndLine="153"<br>EndColumn="105"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol ':' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="153"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol ':' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="171"<br>StartLine="171"<br>StartColumn="32"<br>EndLine="171"<br>EndColumn="32"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol '=' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="171"<br>StartLine="171"<br>StartColumn="45"<br>EndLine="171"<br>EndColumn="46"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol '==' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="171"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol '==' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="171"<br>StartLine="171"<br>StartColumn="48"<br>EndLine="171"<br>EndColumn="48"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol '?' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="171"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol '?' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object"<br>LineNumber="171"<br>StartLine="171"<br>StartColumn="53"<br>EndLine="171"<br>EndColumn="53"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol ':' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root.EBMS.Audit.AuditService`TContext.GetAuditLog%int%string"<br>LineNumber="311"<br>StartLine="311"<br>StartColumn="174"<br>EndLine="311"<br>EndColumn="175"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SymbolsMustBeSpacedCorrectly"<br>RuleId="SA1003"
+The spacing around the symbol '==' is invalid.</Violation
+
+<br><br><pre><code><br>Section="Root"<br>LineNumber="359"<br>StartLine="359"<br>StartColumn="1"<br>EndLine="359"<br>EndColumn="22"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SingleLineCommentsMustBeginWithSingleSpace"<br>RuleId="SA1005"
+The comment must start with a single space. To ignore this error when commenting out a line of code, begin the comment with '////' rather than '//'.</Violation
+
+<br><br><pre><code><br>Section="Root"<br>LineNumber="360"<br>StartLine="360"<br>StartColumn="1"<br>EndLine="360"<br>EndColumn="22"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SingleLineCommentsMustBeginWithSingleSpace"<br>RuleId="SA1005"
+The comment must start with a single space. To ignore this error when commenting out a line of code, begin the comment with '////' rather than '//'.</Violation
+
+<br><br><pre><code><br>Section="Root"<br>LineNumber="361"<br>StartLine="361"<br>StartColumn="1"<br>EndLine="361"<br>EndColumn="22"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SingleLineCommentsMustBeginWithSingleSpace"<br>RuleId="SA1005"
+The comment must start with a single space. To ignore this error when commenting out a line of code, begin the comment with '////' rather than '//'.</Violation
+
+<br><br><pre><code><br>Section="Root"<br>LineNumber="362"<br>StartLine="362"<br>StartColumn="1"<br>EndLine="362"<br>EndColumn="22"<br>Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs"<br>RuleNamespace="StyleCop.CSharp.SpacingRules"<br>Rule="SingleLineCommentsMustBeginWithSingleSpace"<br>RuleId="SA1005"
+The comment must start with a single space. To ignore this error when commenting out a line of code, begin the comment with '////' rather than '//'.</Violation
+
+</StyleCopViolations
+<b>StyleCop Results are: </b>
+
+<Violation 
+Section="Root.EBMS.Audit.AuditService`TContext.Process%TContext%string" 
+LineNumber="43" Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs" 
+RuleNamespace="StyleCop.CSharp.LayoutRules" 
+Rule="CurlyBracketsMustNotBeOmitted" 
+RuleId="SA1503">The body of the if statement must be wrapped in opening and closing curly brackets.
+</Violation>
+
+
+<pre><code>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object" 
+    LineNumber="87" Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs" 
+    RuleNamespace="StyleCop.CSharp.LayoutRules" 
+    Rule="CurlyBracketsMustNotBeOmitted" 
+    RuleId="SA1503"
+    The body of the if statement must be wrapped in opening and closing curly brackets.
+</code></pre>
+<pre><code>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object" 
+    LineNumber="87" Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs" 
+    RuleNamespace="StyleCop.CSharp.LayoutRules" 
+    Rule="CurlyBracketsMustNotBeOmitted" 
+    RuleId="SA1503"
+    The body of the if statement must be wrapped in opening and closing curly brackets.
+</code></pre>
+<pre><code>Section="Root.EBMS.Audit.AuditService`TContext.CreateAuditLogTransaction%TContext%Dictionary`DbEntityEntry`string%string%object" 
+    LineNumber="87" Source="E:\agent\_work\45\s\EBMS.Framework\EBMS.Audit\AuditService.cs" 
+    RuleNamespace="StyleCop.CSharp.LayoutRules" 
+    Rule="CurlyBracketsMustNotBeOmitted" 
+    RuleId="SA1503"
+    The body of the if statement must be wrapped in opening and closing curly brackets.
+</code></pre>
+<br/></div></td></tr></tbody></table></body></html>
